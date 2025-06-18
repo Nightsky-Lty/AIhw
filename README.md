@@ -1,66 +1,182 @@
-# AI大作业 - 大语言模型部署
+# 私人知识库系统
 
-本项目实现了一个基于DEEPSEEK模型的本地部署方案，支持基本的短文本问答功能。
+基于 Ollama DeepSeek 的智能问答知识库系统，支持文档上传、语义检索和自然语言问答。
 
-## 模型说明
+## 🚀 特性
 
-当前使用DEEPSEEK-Coder 1.3B模型，这是一个专门为代码生成和理解优化的轻量级模型：
-- 参数量：1.3B，适合CPU推理
-- 内存需求：约4-6GB
-- 支持多种编程语言的代码理解和生成
+- **📄 文档处理**: 支持 PDF、Word、文本等多种文档格式
+- **🔍 智能检索**: 基于向量相似度的语义搜索
+- **💬 智能问答**: 结合 DeepSeek 模型的自然语言问答
+- **🌐 Web界面**: 简洁美观的用户界面
+- **🔒 隐私安全**: 完全本地化部署，数据不外泄
 
-## 环境要求
+## 📋 系统要求
 
 - Python 3.8+
-- CPU（如有GPU更佳）
-- 至少8GB内存（推荐16GB以上）
+- Ollama (已安装 deepseek-r1:1.5b 模型)
+- 8GB+ 内存推荐
 
-## 安装步骤
+## 🛠️ 安装部署
 
-1. 克隆项目并进入项目目录
-```bash
-git clone [your-repo-url]
-cd [project-directory]
-```
+### 1. 安装依赖
 
-2. 创建并激活虚拟环境
-```bash
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
-```
-
-3. 安装依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-## 使用方法
+### 2. 确保 Ollama 服务运行
 
-1. 启动服务器
+```bash
+# 启动 Ollama 服务
+ollama serve
+
+# 拉取 DeepSeek 模型
+ollama pull deepseek-r1:1.5b
+```
+
+### 3. 配置系统
+
+编辑 `config.py` 文件，根据需要调整配置：
+
+```python
+# Ollama配置
+OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_MODEL = "deepseek-r1:1.5b"
+
+# 其他配置...
+```
+
+### 4. 启动系统
+
 ```bash
 python main.py
 ```
 
-2. 访问API文档
-打开浏览器访问：http://localhost:8000/docs
+系统将在 http://localhost:8000 启动。
 
-## API接口
+## 📖 使用指南
 
-详细接口文档请参考 `docs/api.md`
+### Web界面使用
 
-## 项目结构
+1. **主页**: 查看系统状态和功能介绍
+2. **文档管理**: 上传和管理知识库文档
+3. **智能问答**: 与知识库进行问答交互
+
+### API接口使用
+
+#### 上传文档
+```bash
+curl -X POST "http://localhost:8000/api/upload" \
+     -F "file=@document.pdf"
+```
+
+#### 问答接口
+```bash
+curl -X POST "http://localhost:8000/api/question" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "你的问题", "use_context": true}'
+```
+
+#### 查看文档列表
+```bash
+curl "http://localhost:8000/api/documents"
+```
+
+## 🏗️ 系统架构
 
 ```
-.
-├── README.md
-├── requirements.txt
-├── main.py                 # 主程序入口
-├── app/
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web 界面      │    │   FastAPI       │    │   Ollama        │
+│   (HTML/JS)     │◄──►│   (后端API)     │◄──►│   (DeepSeek)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │   ChromaDB      │
+                       │   (向量数据库)   │
+                       └─────────────────┘
+```
+
+## 📁 项目结构
+
+```
+AIhw/
+├── main.py                 # 主应用入口
+├── config.py               # 配置文件
+├── requirements.txt        # 依赖包
+├── README.md              # 项目说明
+├── models/                # 数据模型
 │   ├── __init__.py
-│   ├── config.py          # 配置文件
-│   ├── model.py           # 模型加载和推理
-│   └── api.py             # API路由
-└── docs/
-    └── api.md             # API文档
-``` 
+│   ├── document.py        # 文档处理模型
+│   └── knowledge_base.py  # 知识库核心模型
+├── services/              # 业务服务
+│   ├── __init__.py
+│   └── ollama_service.py  # Ollama服务集成
+├── api/                   # API接口
+│   ├── __init__.py
+│   └── routes.py          # 路由定义
+└── templates/             # 网页模板
+    ├── index.html         # 主页
+    ├── docs.html          # 文档管理页
+    └── chat.html          # 问答页面
+```
+
+## 🔧 高级配置
+
+### 自定义嵌入模型
+
+在 `config.py` 中修改：
+
+```python
+EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+```
+
+### 调整检索参数
+
+```python
+TOP_K_RESULTS = 10          # 检索结果数量
+MAX_CONTEXT_LENGTH = 4000   # 最大上下文长度
+```
+
+### 文档处理设置
+
+```python
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+SUPPORTED_EXTENSIONS = ['.txt', '.pdf', '.docx', '.md', '.csv']
+```
+
+## 🐛 问题排查
+
+### 常见问题
+
+1. **Ollama 连接失败**
+   - 确保 Ollama 服务正在运行
+   - 检查 `config.py` 中的 `OLLAMA_HOST` 配置
+
+2. **文档上传失败**
+   - 检查文件格式是否支持
+   - 确认文件大小不超过限制
+
+3. **问答无响应**
+   - 检查知识库中是否有相关文档
+   - 确认 DeepSeek 模型是否正确加载
+
+### 日志查看
+
+系统日志会输出到控制台，包含详细的错误信息。
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 许可证
+
+MIT License
+
+## 📞 支持
+
+如有问题，请通过 Issue 或 Email 联系。
+
+---
+
+**注意**: 首次运行时会自动下载嵌入模型，可能需要一些时间。 

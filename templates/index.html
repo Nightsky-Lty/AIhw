@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私人知识库系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+        }
+        .feature-card {
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-card {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-brain"></i> 私人知识库
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/docs-ui">
+                    <i class="bi bi-file-text"></i> 文档管理
+                </a>
+                <a class="nav-link" href="/chat-ui">
+                    <i class="bi bi-chat-dots"></i> 智能问答
+                </a>
+                <a class="nav-link" href="/docs">
+                    <i class="bi bi-code-slash"></i> API文档
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">智能私人知识库</h1>
+                    <p class="lead mb-4">
+                        基于 Ollama DeepSeek 的本地化知识问答系统，
+                        支持文档上传、智能检索和自然语言问答。
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="/docs-ui" class="btn btn-light btn-lg">
+                            <i class="bi bi-upload"></i> 上传文档
+                        </a>
+                        <a href="/chat-ui" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-chat"></i> 开始问答
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center">
+                        <i class="bi bi-robot" style="font-size: 10rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能特性 -->
+    <div class="container my-5">
+        <div class="row text-center mb-5">
+            <div class="col">
+                <h2 class="fw-bold">核心功能</h2>
+                <p class="text-muted">强大而简单的知识管理工具</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-arrow-up text-primary" style="font-size: 3rem;"></i>
+                        <h5 class="card-title mt-3">文档上传</h5>
+                        <p class="card-text text-muted">
+                            支持 PDF、Word、文本文件等多种格式，
+                            自动提取和分析文档内容。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-search text-success" style="font-size: 3rem;"></i>
+                        <h5 class="card-title mt-3">智能检索</h5>
+                        <p class="card-text text-muted">
+                            基于语义向量的相似度搜索，
+                            快速找到相关的知识内容。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-chat-square-dots text-warning" style="font-size: 3rem;"></i>
+                        <h5 class="card-title mt-3">智能问答</h5>
+                        <p class="card-text text-muted">
+                            结合 DeepSeek 模型，基于知识库内容
+                            提供准确的自然语言回答。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统状态 -->
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card stats-card border-0 shadow">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">
+                            <i class="bi bi-graph-up"></i> 系统状态
+                        </h5>
+                        <div class="row text-center" id="stats-container">
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <i class="bi bi-files" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 id="doc-count">-</h4>
+                                <small>文档数量</small>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <i class="bi bi-layers" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 id="chunk-count">-</h4>
+                                <small>知识块数量</small>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <i class="bi bi-robot" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 id="model-status">-</h4>
+                                <small>模型状态</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <footer class="bg-dark text-light py-4">
+        <div class="container text-center">
+            <p class="mb-0">
+                <i class="bi bi-heart-fill text-danger"></i> 
+                私人知识库系统 - 基于 Ollama + DeepSeek
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 加载系统统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('doc-count').textContent = data.stats.total_documents;
+                    document.getElementById('chunk-count').textContent = data.stats.total_chunks;
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+            }
+        }
+
+        // 检查系统健康状态
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('model-status');
+                if (data.ollama_available) {
+                    statusElement.textContent = '正常';
+                    statusElement.className = 'text-success';
+                } else {
+                    statusElement.textContent = '离线';
+                    statusElement.className = 'text-warning';
+                }
+            } catch (error) {
+                const statusElement = document.getElementById('model-status');
+                statusElement.textContent = '错误';
+                statusElement.className = 'text-danger';
+            }
+        }
+
+        // 页面加载时执行
+        window.addEventListener('load', () => {
+            loadStats();
+            checkHealth();
+        });
+    </script>
+</body>
+</html> 
