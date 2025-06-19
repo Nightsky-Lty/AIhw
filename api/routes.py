@@ -2,14 +2,14 @@
 API路由定义
 """
 import os
-import shutil
-from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from typing import List
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from models.knowledge_base import KnowledgeBase
 from services.ollama_service import OllamaService
+from services.folder_watcher import FolderWatcher
 import config
 
 router = APIRouter()
@@ -17,6 +17,7 @@ router = APIRouter()
 # 初始化服务
 kb = KnowledgeBase()
 ollama = OllamaService()
+folder_watcher = FolderWatcher(kb)  # 默认会自动启动监控
 
 # 创建上传目录
 os.makedirs(config.UPLOAD_DIR, exist_ok=True)
@@ -33,46 +34,56 @@ class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     use_context: bool = True
 
-@router.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
-    """上传文档"""
+# 文件夹监控相关接口
+
+@router.post("/folder-watch/start")
+async def start_folder_watching():
+    """启动文件夹监控"""
     try:
-        # 检查文件扩展名
-        if not any(file.filename.lower().endswith(ext) for ext in config.SUPPORTED_EXTENSIONS):
-            raise HTTPException(
-                status_code=400, 
-                detail=f"不支持的文件类型。支持的类型: {', '.join(config.SUPPORTED_EXTENSIONS)}"
-            )
-        
-        # 检查文件大小
-        if file.size > config.MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"文件过大。最大支持 {config.MAX_FILE_SIZE // (1024*1024)}MB"
-            )
-        
-        # 保存文件
-        file_path = os.path.join(config.UPLOAD_DIR, file.filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # 添加到知识库
-        doc_id = kb.add_document(file_path, file.filename)
-        
-        # 删除临时文件
-        os.remove(file_path)
-        
+        folder_watcher.start_watching()
         return JSONResponse({
             "success": True,
-            "message": "文档上传成功",
-            "document_id": doc_id,
-            "filename": file.filename
+            "message": "文件夹监控已启动",
+            "watch_folder": str(folder_watcher.watch_folder.absolute())
         })
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"上传失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"启动监控失败: {str(e)}")
+
+@router.post("/folder-watch/stop")
+async def stop_folder_watching():
+    """停止文件夹监控"""
+    try:
+        folder_watcher.stop_watching()
+        return JSONResponse({
+            "success": True,
+            "message": "文件夹监控已停止"
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"停止监控失败: {str(e)}")
+
+@router.get("/folder-watch/status")
+async def get_folder_watch_status():
+    """获取文件夹监控状态"""
+    try:
+        status = folder_watcher.get_status()
+        return JSONResponse({
+            "success": True,
+            "status": status
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取状态失败: {str(e)}")
+
+@router.post("/folder-watch/rescan")
+async def force_rescan_folder():
+    """强制重新扫描文件夹"""
+    try:
+        folder_watcher.force_rescan()
+        return JSONResponse({
+            "success": True,
+            "message": "强制重新扫描完成"
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"重新扫描失败: {str(e)}")
 
 @router.post("/question")
 async def ask_question(request: QuestionRequest):

@@ -1,12 +1,14 @@
 # 私人知识库系统
 
-基于 Ollama DeepSeek 的智能问答知识库系统，支持文档上传、语义检索和自然语言问答。
+基于 Ollama DeepSeek 的智能问答知识库系统，支持文件夹监控、语义检索和自然语言问答。
 
 ## 🚀 特性
 
 - **📄 文档处理**: 支持 PDF、Word、文本等多种文档格式
+- **📁 文件夹监控**: 自动监控指定文件夹，实时构建知识库
 - **🔍 智能检索**: 基于向量相似度的语义搜索
 - **💬 智能问答**: 结合 DeepSeek 模型的自然语言问答
+- **🗨️ 多轮对话**: 支持上下文记忆的对话功能
 - **🌐 Web界面**: 简洁美观的用户界面
 - **🔒 隐私安全**: 完全本地化部署，数据不外泄
 
@@ -59,16 +61,30 @@ python main.py
 ### Web界面使用
 
 1. **主页**: 查看系统状态和功能介绍
-2. **文档管理**: 上传和管理知识库文档
+2. **文档管理**: 管理知识库文档，通过文件夹监控功能
 3. **智能问答**: 与知识库进行问答交互
 
-### API接口使用
+### 📁 文件夹监控功能
 
-#### 上传文档
-```bash
-curl -X POST "http://localhost:8000/api/upload" \
-     -F "file=@document.pdf"
-```
+系统通过监控文件夹实现知识库的自动构建和管理。
+
+#### 使用步骤：
+1. 访问文档管理页面 (http://localhost:8000/docs-ui)
+2. 在"文件夹监控"区域点击"启动监控"（系统启动时会自动开启监控）
+3. 将文档文件放入监控文件夹：`./uploads/`
+4. 系统会自动检测文件变化并更新知识库
+
+#### 监控功能：
+- ✅ **自动添加**: 检测新文件并自动添加到知识库
+- 🔄 **自动更新**: 检测文件修改并更新知识库内容  
+- 🗑️ **自动删除**: 检测文件删除并从知识库中移除
+- 📊 **实时状态**: 显示监控状态和文件列表
+- 🔍 **强制重扫**: 支持手动触发重新扫描
+
+#### 支持格式：
+- `.txt` - 纯文本文件
+
+### API接口使用
 
 #### 问答接口
 ```bash
@@ -80,6 +96,21 @@ curl -X POST "http://localhost:8000/api/question" \
 #### 查看文档列表
 ```bash
 curl "http://localhost:8000/api/documents"
+```
+
+#### 文件夹监控接口
+```bash
+# 启动文件夹监控
+curl -X POST "http://localhost:8000/api/folder-watch/start"
+
+# 停止文件夹监控
+curl -X POST "http://localhost:8000/api/folder-watch/stop"
+
+# 查看监控状态
+curl "http://localhost:8000/api/folder-watch/status"
+
+# 强制重新扫描
+curl -X POST "http://localhost:8000/api/folder-watch/rescan"
 ```
 
 ## 🏗️ 系统架构
@@ -111,7 +142,8 @@ AIhw/
 │   └── knowledge_base.py  # 知识库核心模型
 ├── services/              # 业务服务
 │   ├── __init__.py
-│   └── ollama_service.py  # Ollama服务集成
+│   ├── ollama_service.py  # Ollama服务集成
+│   └── folder_watcher.py  # 文件夹监控服务
 ├── api/                   # API接口
 │   ├── __init__.py
 │   └── routes.py          # 路由定义
@@ -153,13 +185,15 @@ SUPPORTED_EXTENSIONS = ['.txt', '.pdf', '.docx', '.md', '.csv']
    - 确保 Ollama 服务正在运行
    - 检查 `config.py` 中的 `OLLAMA_HOST` 配置
 
-2. **文档上传失败**
-   - 检查文件格式是否支持
-   - 确认文件大小不超过限制
-
-3. **问答无响应**
+2. **问答无响应**
    - 检查知识库中是否有相关文档
    - 确认 DeepSeek 模型是否正确加载
+
+3. **文件夹监控不工作**
+   - 确认 `./uploads/` 文件夹存在
+   - 检查文档格式是否在支持列表中
+   - 查看控制台日志获取详细错误信息
+   - 尝试手动重新扫描功能
 
 ### 日志查看
 

@@ -1,438 +1,339 @@
 # API 接口文档
 
-私人知识库系统 API 接口详细说明。
+私人知识库系统 API 接口说明
 
 ## 基础信息
 
-- **基础URL**: `http://localhost:8000/api`
-- **认证方式**: 无需认证
-- **请求格式**: JSON
-- **响应格式**: JSON
+- **Base URL**: `http://localhost:8000/api`
+- **Content-Type**: `application/json`
+- **编码**: UTF-8
 
-## 接口列表
+## 文档管理接口
 
-### 1. 文档管理
+### 获取文档列表
 
-#### 1.1 上传文档
-
-**接口**: `POST /upload`
-
-**描述**: 上传文档到知识库
-
-**请求参数**:
-- `file` (File): 要上传的文件
-
-**支持格式**: `.txt`, `.pdf`, `.docx`, `.md`
-
-**请求示例**:
-```bash
-curl -X POST "http://localhost:8000/api/upload" \
-     -F "file=@example.pdf"
-```
-
-**响应示例**:
-```json
-{
-    "success": true,
-    "message": "文档上传成功",
-    "document_id": "uuid-string",
-    "filename": "example.pdf"
-}
-```
-
-#### 1.2 获取文档列表
-
-**接口**: `GET /documents`
+**接口地址**: `GET /documents`
 
 **描述**: 获取知识库中所有文档的列表
 
-**请求示例**:
-```bash
-curl "http://localhost:8000/api/documents"
-```
-
 **响应示例**:
 ```json
 {
-    "success": true,
-    "documents": [
-        {
-            "id": "uuid-string",
-            "filename": "example.pdf",
-            "chunk_count": 10
-        }
-    ]
+  "success": true,
+  "documents": [
+    {
+      "id": "doc-uuid-1",
+      "filename": "example.pdf",
+      "chunk_count": 15
+    }
+  ]
 }
 ```
 
-#### 1.3 删除文档
+### 删除文档
 
-**接口**: `DELETE /documents/{document_id}`
+**接口地址**: `DELETE /documents/{document_id}`
 
 **描述**: 从知识库中删除指定文档
 
 **路径参数**:
-- `document_id` (string): 文档ID
-
-**请求示例**:
-```bash
-curl -X DELETE "http://localhost:8000/api/documents/uuid-string"
-```
+- `document_id`: 文档ID
 
 **响应示例**:
 ```json
 {
-    "success": true,
-    "message": "文档删除成功"
+  "success": true,
+  "message": "文档删除成功"
 }
 ```
 
-### 2. 知识检索
+### 搜索文档
 
-#### 2.1 搜索文档
-
-**接口**: `GET /search`
+**接口地址**: `GET /search`
 
 **描述**: 在知识库中搜索相关内容
 
 **查询参数**:
-- `q` (string): 搜索查询
-- `limit` (int, 可选): 返回结果数量，默认为5
+- `q`: 搜索关键词 (必填)
+- `limit`: 返回结果数量 (可选，默认5)
 
-**请求示例**:
-```bash
-curl "http://localhost:8000/api/search?q=人工智能&limit=3"
+**响应示例**:
+```json
+{
+  "success": true,
+  "query": "Python编程",
+  "results": [
+    {
+      "content": "Python是一种高级编程语言...",
+      "metadata": {
+        "document_id": "doc-uuid-1",
+        "filename": "python_guide.pdf",
+        "chunk_index": 3
+      },
+      "similarity": 0.95
+    }
+  ]
+}
+```
+
+## 问答接口
+
+### 单次问答
+
+**接口地址**: `POST /question`
+
+**描述**: 基于知识库内容回答单个问题
+
+**请求体**:
+```json
+{
+  "question": "什么是机器学习？",
+  "use_context": true
+}
 ```
 
 **响应示例**:
 ```json
 {
-    "success": true,
-    "query": "人工智能",
-    "results": [
-        {
-            "content": "文档内容片段...",
-            "metadata": {
-                "document_id": "uuid-string",
-                "filename": "ai_guide.pdf",
-                "chunk_index": 0
-            },
-            "similarity": 0.85
-        }
+  "success": true,
+  "question": "什么是机器学习？",
+  "answer": "机器学习是人工智能的一个分支...",
+  "context_used": true,
+  "sources": 3
+}
+```
+
+### 多轮对话
+
+**接口地址**: `POST /chat`
+
+**描述**: 支持上下文记忆的多轮对话
+
+**请求体**:
+```json
+{
+  "messages": [
+    {"role": "user", "content": "什么是Python？"},
+    {"role": "assistant", "content": "Python是一种编程语言..."},
+    {"role": "user", "content": "它有什么特点？"}
+  ],
+  "use_context": true
+}
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "answer": "Python的主要特点包括...",
+  "context_used": true,
+  "sources": 2
+}
+```
+
+## 文件夹监控接口
+
+### 启动文件夹监控
+
+**接口地址**: `POST /folder-watch/start`
+
+**描述**: 启动文件夹监控服务，自动检测uploads文件夹中的文件变化
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "message": "文件夹监控已启动",
+  "watch_folder": "/path/to/uploads"
+}
+```
+
+### 停止文件夹监控
+
+**接口地址**: `POST /folder-watch/stop`
+
+**描述**: 停止文件夹监控服务
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "message": "文件夹监控已停止"
+}
+```
+
+### 获取监控状态
+
+**接口地址**: `GET /folder-watch/status`
+
+**描述**: 获取文件夹监控服务的当前状态
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "status": {
+    "is_running": true,
+    "watch_folder": "/path/to/uploads",
+    "tracked_files": 5,
+    "supported_extensions": [".txt"],
+    "files": [
+      {
+        "path": "/path/to/uploads/doc1.txt",
+        "name": "doc1.txt",
+        "document_id": "doc-uuid-1"
+      }
     ]
+  }
 }
 ```
 
-### 3. 智能问答
+### 强制重新扫描
 
-#### 3.1 单次问答
+**接口地址**: `POST /folder-watch/rescan`
 
-**接口**: `POST /question`
-
-**描述**: 基于知识库内容回答问题
-
-**请求参数**:
-```json
-{
-    "question": "string",      // 用户问题
-    "use_context": true        // 是否使用知识库上下文
-}
-```
-
-**请求示例**:
-```bash
-curl -X POST "http://localhost:8000/api/question" \
-     -H "Content-Type: application/json" \
-     -d '{
-         "question": "什么是人工智能？",
-         "use_context": true
-     }'
-```
+**描述**: 强制重新扫描监控文件夹，重新构建知识库
 
 **响应示例**:
 ```json
 {
-    "success": true,
-    "question": "什么是人工智能？",
-    "answer": "人工智能是...",
-    "context_used": true,
-    "sources": 3
+  "success": true,
+  "message": "强制重新扫描完成"
 }
 ```
 
-#### 3.2 多轮对话
+## 系统信息接口
 
-**接口**: `POST /chat`
+### 获取统计信息
 
-**描述**: 支持多轮对话的问答接口
-
-**请求参数**:
-```json
-{
-    "messages": [
-        {
-            "role": "user",
-            "content": "第一个问题"
-        },
-        {
-            "role": "assistant", 
-            "content": "第一个回答"
-        },
-        {
-            "role": "user",
-            "content": "第二个问题"
-        }
-    ],
-    "use_context": true
-}
-```
-
-**请求示例**:
-```bash
-curl -X POST "http://localhost:8000/api/chat" \
-     -H "Content-Type: application/json" \
-     -d '{
-         "messages": [
-             {"role": "user", "content": "介绍一下机器学习"},
-             {"role": "assistant", "content": "机器学习是..."},
-             {"role": "user", "content": "它有哪些应用？"}
-         ],
-         "use_context": true
-     }'
-```
-
-**响应示例**:
-```json
-{
-    "success": true,
-    "answer": "机器学习的应用包括...",
-    "context_used": true,
-    "sources": 2
-}
-```
-
-### 4. 系统信息
-
-#### 4.1 获取统计信息
-
-**接口**: `GET /stats`
+**接口地址**: `GET /stats`
 
 **描述**: 获取知识库统计信息
 
-**请求示例**:
-```bash
-curl "http://localhost:8000/api/stats"
-```
-
 **响应示例**:
 ```json
 {
-    "success": true,
-    "stats": {
-        "total_chunks": 150,
-        "total_documents": 10,
-        "documents": [
-            {
-                "id": "uuid-string",
-                "filename": "example.pdf",
-                "chunk_count": 15
-            }
-        ]
-    }
+  "success": true,
+  "stats": {
+    "total_chunks": 150,
+    "total_documents": 10,
+    "documents": [
+      {
+        "id": "doc-uuid-1",
+        "filename": "example.pdf",
+        "chunk_count": 15
+      }
+    ]
+  }
 }
 ```
 
-#### 4.2 健康检查
+### 健康检查
 
-**接口**: `GET /health`
+**接口地址**: `GET /health`
 
 **描述**: 检查系统健康状态
 
-**请求示例**:
-```bash
-curl "http://localhost:8000/api/health"
-```
-
 **响应示例**:
 ```json
 {
-    "success": true,
-    "status": "healthy",
-    "ollama_available": true,
-    "model": "deepseek-r1:1.5b"
+  "success": true,
+  "status": "healthy",
+  "ollama_available": true,
+  "model": "deepseek-r1:1.5b"
 }
 ```
 
-## 错误处理
+## 使用说明
 
-### 错误响应格式
+### 文档添加方式
+
+系统不再支持通过API上传文件，而是采用文件夹监控方式自动添加文档：
+
+1. 将文件放入 `uploads` 文件夹
+2. 系统自动检测并添加到知识库
+3. 支持的文件格式：.txt
+
+### 文件夹监控工作流程
+
+1. 启动监控：`POST /folder-watch/start`
+2. 添加文件到 `uploads` 文件夹
+3. 系统自动处理文件变化（新增、修改、删除）
+4. 查看状态：`GET /folder-watch/status`
+5. 需要时可以强制重新扫描：`POST /folder-watch/rescan`
+6. 停止监控：`POST /folder-watch/stop`
+
+## 错误响应
+
+所有接口在出错时都会返回统一的错误格式：
 
 ```json
 {
-    "success": false,
-    "detail": "错误描述信息"
+  "success": false,
+  "detail": "错误详细信息"
 }
 ```
 
-### 常见错误代码
+常见错误状态码：
+- `400`: 请求参数错误
+- `404`: 资源不存在
+- `500`: 服务器内部错误
 
-- `400 Bad Request`: 请求参数错误
-- `404 Not Found`: 资源不存在
-- `413 Payload Too Large`: 文件过大
-- `500 Internal Server Error`: 服务器内部错误
+## 使用示例
 
-### 具体错误示例
-
-#### 文件类型不支持
-```json
-{
-    "success": false,
-    "detail": "不支持的文件类型。支持的类型: .txt, .pdf, .docx, .md"
-}
-```
-
-#### 文件过大
-```json
-{
-    "success": false,
-    "detail": "文件过大。最大支持 10MB"
-}
-```
-
-#### Ollama服务不可用
-```json
-{
-    "success": false,
-    "detail": "连接Ollama服务失败: Connection refused"
-}
-```
-
-## 使用建议
-
-### 1. 最佳实践
-
-- **文档上传**: 建议将大文档分割成较小的部分上传
-- **问答查询**: 问题越具体，答案越准确
-- **批量操作**: 避免并发大量请求，建议控制频率
-
-### 2. 性能优化
-
-- **缓存策略**: 系统会自动缓存嵌入向量
-- **模型预热**: 首次使用可能较慢，后续会更快
-- **资源管理**: 大量文档时注意内存使用
-
-### 3. 安全注意事项
-
-- **文件验证**: 系统会验证文件类型和大小
-- **内容过滤**: 建议在生产环境中添加内容审核
-- **访问控制**: 根据需要添加身份验证机制
-
-## 示例代码
-
-### Python 客户端示例
+### Python 示例
 
 ```python
 import requests
-import json
 
-class KnowledgeBaseClient:
-    def __init__(self, base_url="http://localhost:8000/api"):
-        self.base_url = base_url
-    
-    def upload_document(self, file_path):
-        """上传文档"""
-        with open(file_path, 'rb') as f:
-            files = {'file': f}
-            response = requests.post(f"{self.base_url}/upload", files=files)
-            return response.json()
-    
-    def ask_question(self, question, use_context=True):
-        """提问"""
-        data = {
-            "question": question,
-            "use_context": use_context
-        }
-        response = requests.post(f"{self.base_url}/question", json=data)
-        return response.json()
-    
-    def get_documents(self):
-        """获取文档列表"""
-        response = requests.get(f"{self.base_url}/documents")
-        return response.json()
+# 启动文件夹监控
+response = requests.post('http://localhost:8000/api/folder-watch/start')
+print(response.json())
 
-# 使用示例
-client = KnowledgeBaseClient()
-
-# 上传文档
-result = client.upload_document("document.pdf")
-print(f"上传结果: {result}")
-
-# 提问
-answer = client.ask_question("文档的主要内容是什么？")
-print(f"回答: {answer['answer']}")
+# 问答
+response = requests.post(
+    'http://localhost:8000/api/question',
+    json={
+        'question': '什么是机器学习？',
+        'use_context': True
+    }
+)
+print(response.json())
 ```
 
-### JavaScript 客户端示例
+### JavaScript 示例
 
 ```javascript
-class KnowledgeBaseClient {
-    constructor(baseUrl = 'http://localhost:8000/api') {
-        this.baseUrl = baseUrl;
-    }
-    
-    async uploadDocument(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await fetch(`${this.baseUrl}/upload`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        return await response.json();
-    }
-    
-    async askQuestion(question, useContext = true) {
-        const response = await fetch(`${this.baseUrl}/question`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                question: question,
-                use_context: useContext
-            })
-        });
-        
-        return await response.json();
-    }
-    
-    async getDocuments() {
-        const response = await fetch(`${this.baseUrl}/documents`);
-        return await response.json();
-    }
+// 启动文件夹监控
+async function startMonitoring() {
+    const response = await fetch('/api/folder-watch/start', {
+        method: 'POST'
+    });
+    const data = await response.json();
+    console.log(data);
 }
 
-// 使用示例
-const client = new KnowledgeBaseClient();
-
-// 上传文档
-document.getElementById('fileInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const result = await client.uploadDocument(file);
-        console.log('上传结果:', result);
-    }
-});
-
-// 提问
-async function askQuestion() {
-    const question = document.getElementById('questionInput').value;
-    const answer = await client.askQuestion(question);
-    console.log('回答:', answer.answer);
+// 问答
+async function askQuestion(question) {
+    const response = await fetch('/api/question', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            question: question,
+            use_context: true
+        })
+    });
+    const data = await response.json();
+    return data.answer;
 }
 ```
 
----
+## 注意事项
 
-更多详细信息请参考项目 README.md 文件。 
+1. **文件大小限制**: 单个文件最大支持 10MB
+2. **支持格式**: 仅支持 .txt 格式
+3. **监控文件夹**: 默认监控 `./uploads/` 文件夹
+4. **并发限制**: 建议避免同时上传过多文档
+5. **Ollama 依赖**: 问答功能需要 Ollama 服务正常运行 

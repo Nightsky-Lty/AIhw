@@ -13,7 +13,7 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 # 文档处理配置
 UPLOAD_DIR = "./uploads"
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-SUPPORTED_EXTENSIONS = ['.txt', '.pdf', '.docx', '.md']
+SUPPORTED_EXTENSIONS = ['.txt']
 
 # 检索配置
 TOP_K_RESULTS = 5
